@@ -1,0 +1,9 @@
+{
+  "dev": {
+    "driver": "pg",
+    "host": "localhost",
+    "user": "yuuko",
+    "password": "mio",
+    "database": "ramune"
+  }
+}
