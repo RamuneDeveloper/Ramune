@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express');
 const bodyParser = require('body-parser');
+const xss = require('xss');
 const home = require('./views/home');
 const upload = require('./views/upload');
 const manga = require('./views/manga');
@@ -66,11 +67,12 @@ express()
     res.redirect('back')
   })
   .post('/api/register', async (req, res) => {
-    const username = req.body.username;
+    if (!req.body.username || !req.body.password || !req.body.confirm) return res.sendStatus(401);
+
+    const username = xss(req.body.username);
     const password = req.body.password;
     const c_password = req.body.confirm;
 
-    if (!username || !password || !c_password) return res.sendStatus(401);
     if (username.trim() === '') return res.status(400).send('Username cannot be empty.');
     if (password.trim() === '') return res.status(400).send('Password cannot be empty.');
     if (password !== c_password) return res.status(400).send('Passwords do not match.');
