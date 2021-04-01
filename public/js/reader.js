@@ -90,7 +90,6 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
   const manga_data = await (await fetch('/api/manga/' + release_data[0].manga_id)).json();
 
   images = release_data[0].images;
-  images.sort();
   total_pages = images.length
 
   var img = document.createElement('img');

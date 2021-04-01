@@ -1,4 +1,6 @@
 require('dotenv').config()
+const path = require('path');
+const StreamZip = require('node-stream-zip');
 const express = require('express');
 const bodyParser = require('body-parser');
 const xss = require('xss');
@@ -6,11 +8,22 @@ const home = require('./views/home');
 const upload = require('./views/upload');
 const manga = require('./views/manga');
 const reader = require('./views/reader');
+const hasha = require('hasha')
+const read_chunk = require('read-chunk');
+const img_size = require('image-size')
+const img_type = require('image-type')
+const crypto = require('crypto');
+const Promise = require('bluebird');
+const fs = require('fs-extra')
+const multer = require('multer');
 const bcrypt = require('bcrypt');
 const { db } = require('./db');
 const cookieSession = require('cookie-session');
 const login = require('./views/login');
 const register = require('./views/register');
+
+const { promisify } = require('util')
+const sizeOf = promisify(img_size)
 
 function sortObject(obj) {
   return Object.keys(obj).sort().reduce(function (result, key) {
@@ -18,6 +31,25 @@ function sortObject(obj) {
     return result;
   }, {});
 }
+
+const file_upload = multer({
+  storage: multer.diskStorage({
+    destination: path.join(process.env.FILES_ROOT, 'assets', 'temp')
+  }),
+  limits: {
+    files: 2,
+    fileSize: 5000000000 // 5GB
+  },
+  fileFilter: (_, file, cb) => {
+    const allowed_mimes = [
+      'image/jpeg',
+      'image/png',
+      'application/x-zip-compressed',
+      'application/zip'
+    ]
+    cb(null, allowed_mimes.includes(file.mimetype))
+  }
+});
 
 express()
   .use(cookieSession({
@@ -27,7 +59,7 @@ express()
   .use(bodyParser.urlencoded({ extended: false }))
   .use(bodyParser.json())
   .use(express.static('public'))
-  .use('/assets', express.static('assets'))
+  .use('/assets', express.static(path.join(process.env.FILES_ROOT, 'assets')))
   .get('/', async (req, res) => {
     const results = await db.query('SELECT * FROM manga');
     res.send(home({
@@ -62,6 +94,78 @@ express()
   })
   .get('/login', (req, res) => res.send(login({ req: req })))
   .get('/register', (req, res) => res.send(register({ req: req })))
+  .post('/api/upload', file_upload.fields([
+    { name: 'cover' },
+    { name: 'upload_file' }
+  ]), async (req, res) => {
+    if (!req.session.account_id) return res.sendStatus(401)
+    if (!req.body.new_manga && (!req.body.manga_id || !req.body.chapter)) return res.sendStatus(400);
+    if (req.body.new_manga && (!req.body.eng_title || !req.body.description)) return res.sendStatus(400);
+    if (req.body.new_manga && !req.files.cover) return res.sendStatus(400);
+    if (!req.files.upload_file) return res.sendStatus(400);
+
+    let manga_id = req.body.manga_id;
+    if (req.body.new_manga) {
+      const buffer = await read_chunk(req.files.cover[0].path, 0, img_type.minimumBytes)
+      const _img_type = img_type(buffer);
+      if (!_img_type) return res.status(415).send('Encountered a non-image file.');
+      if (!/(gif|jpe?g|png|webp)/i.test(_img_type.ext)) return res.status(422).send('Encountered unsupported image.');
+      const dimensions = await sizeOf(req.files.cover[0].path);
+      if (dimensions.width > 10000 || dimensions.height > 10000) return res.status(422).send('Encountered extremely large image. Resolution limit is 10000x10000.');
+      const cover_hash = hasha.fromFile(req.files.cover[0].path, { algorithm: 'md5' });
+      await fs.move(req.files.cover[0].path, path.join(process.env.FILES_ROOT, 'assets', cover_hash + '.' + _img_type.ext))
+        .catch(() => {})
+
+      const schema = {
+        eng_title: req.body.eng_title,
+        romaji_title: req.body.romaji_title,
+        author: req.body.author,
+        artist: req.body.artist,
+        description: req.body.description,
+        cover: cover_hash + '.' + _img_type.ext,
+      }
+
+      const manga_results = await db.query(`INSERT INTO manga (${Object.keys(schema).join(', ')}) VALUES (${Object.values(schema).map((_, i) => `$${i + 1}`).join(', ')}) returning id`, Object.values(schema))
+      manga_id = manga_results.rows[0].id;
+    }
+    const zip = new StreamZip.async({ file: req.files.upload_file[0].path });
+    const entries = await zip.entries();
+    const sorted_entries = Object.values(entries)
+      .filter(entry => !entry.isDirectory)
+      .map(entry => entry.name)
+      .sort();
+    
+    const hashed_entries = await Promise.mapSeries(sorted_entries, async entry => {
+      const temp_name = crypto.randomBytes(5).toString('hex');
+      await zip.extract(entry, path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name));
+      const buffer = await read_chunk(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), 0, img_type.minimumBytes)
+      const _img_type = img_type(buffer);
+      if (!_img_type) return res.status(415).send('Encountered a non-image file.');
+      if (!/(gif|jpe?g|png|webp)/i.test(_img_type.ext)) return res.status(422).send('Encountered unsupported image.');
+      const dimensions = await sizeOf(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name));
+      if (dimensions.width > 10000 || dimensions.height > 10000) return res.status(422).send('Encountered extremely large image. Resolution limit is 10000x10000.');
+      const hash = await hasha.fromFile(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), { algorithm: 'md5' });
+      
+      await fs.move(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), path.join(process.env.FILES_ROOT, 'assets', hash + '.' + _img_type.ext))
+        .catch(() => {})
+      await fs.remove(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name))
+      return hash + '.' + _img_type.ext  
+    })
+
+    await zip.close();
+    await fs.remove(req.files.upload_file[0].path);
+
+    const schema = {
+      manga_id: manga_id,
+      chapter_id: req.body.chapter,
+      source: req.body.source,
+      uploader: req.session.account_id,
+      images: hashed_entries
+    }
+    
+    await db.query(`INSERT INTO uploads (${Object.keys(schema).join(', ')}) VALUES (${Object.values(schema).map((_, i) => `$${i + 1}`).join(', ')})`, Object.values(schema))
+    res.send('Success!')
+  })
   .get('/api/logout', (req, res) => {
     req.session.account_id = null;
     res.redirect('back')
@@ -94,13 +198,24 @@ express()
     const password = req.body.password;
 
     const account_results = await db.query('SELECT * FROM accounts WHERE username = $1', [username]);
-    if (!account_results.rows.length) return res.status(401).send('That user doesn\'t exist.');
+    if (!account_results.rows.length) return res.status(401).send('Incorrect username or password.');
 
     const is_password_correct = await bcrypt.compare(password, account_results.rows[0].password_hash);
-    if (!is_password_correct) return res.status(401).send('Incorrect password.');
+    if (!is_password_correct) return res.status(401).send('Incorrect username or password.');
 
     req.session.account_id = account_results.rows[0].id;
     res.redirect('/')
+  })
+  .get('/api/autocomplete', async (req, res) => {
+    if (!req.query.q) return res.sendStatus(400);
+    const manga_rows = await db.query(`SELECT * FROM manga WHERE to_tsvector('english', eng_title || ' ' || romaji_title || ' ' || author || ' ' || artist || ' ' || romaji_title) @@ websearch_to_tsquery($1) LIMIT 10`, [req.query.q]);
+    const manga_list = manga_rows.rows.map(row => {
+      return {
+        label: row.eng_title,
+        value: row.id 
+      }
+    });
+    res.json(manga_list);
   })
   .get('/api/release/:id', async (req, res) => {
     const upload_rows = await db.query('SELECT * FROM uploads WHERE id = $1', [req.params.id]);
