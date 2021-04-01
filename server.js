@@ -72,7 +72,7 @@ express()
     const upload_results = await db.query('SELECT * FROM uploads WHERE manga_id = $1', [req.params.id]);
     const uploads = {}
     upload_results.rows.forEach(row => {
-      uploads[row.manga_id] = uploads[row.manga_id] ? [].concat(uploads[row.manga_id], row) : [row]
+      uploads[row.chapter_id] = uploads[row.chapter_id] ? [].concat(uploads[row.chapter_id], row) : [row]
     });
 
     // const chapter_results = await db.query('SELECT * FROM chapters WHERE manga_id = $1', [req.params.id]);
@@ -104,7 +104,7 @@ express()
     if (req.body.new_manga && !req.files.cover) return res.sendStatus(400);
     if (!req.files.upload_file) return res.sendStatus(400);
 
-    let manga_id = req.body.manga_id;
+    let manga_id = parseInt(req.body.manga_id);
     if (req.body.new_manga) {
       const buffer = await read_chunk(req.files.cover[0].path, 0, img_type.minimumBytes)
       const _img_type = img_type(buffer);
@@ -117,11 +117,11 @@ express()
         .catch(() => {})
 
       const schema = {
-        eng_title: req.body.eng_title,
-        romaji_title: req.body.romaji_title,
-        author: req.body.author,
-        artist: req.body.artist,
-        description: req.body.description,
+        eng_title: xss(req.body.eng_title),
+        romaji_title: xss(req.body.romaji_title),
+        author: xss(req.body.author),
+        artist: xss(req.body.artist),
+        description: xss(req.body.description),
         cover: cover_hash + '.' + _img_type.ext,
       }
 
@@ -157,8 +157,8 @@ express()
 
     const schema = {
       manga_id: manga_id,
-      chapter_id: req.body.chapter,
-      source: req.body.source,
+      chapter_id: parseInt(req.body.chapter),
+      source: xss(req.body.source),
       uploader: req.session.account_id,
       images: hashed_entries
     }
