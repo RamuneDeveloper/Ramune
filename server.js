@@ -120,10 +120,10 @@ express()
     { name: 'upload_file' }
   ]), async (req, res) => {
     if (!req.session.account_id) return res.sendStatus(401)
-    if (!req.body.new_manga && (!req.body.manga_id || !req.body.chapter)) return res.sendStatus(400);
-    if (req.body.new_manga && (!req.body.eng_title || !req.body.description)) return res.sendStatus(400);
-    if (req.body.new_manga && !req.files.cover) return res.sendStatus(400);
-    if (!req.files.upload_file) return res.sendStatus(400);
+    if (!req.body.new_manga && !req.body.manga_id) return res.status(400).send('Missing manga ID.');
+    if (req.body.new_manga && (!req.body.eng_title || !req.body.description)) return res.status(400).send('Missing title/description on new manga.');
+    if (req.body.new_manga && !req.files.cover) return res.status(400).send('Missing cover image on new manga.');
+    if (!req.files.upload_file) return res.status(400).send('Missing file.');
 
     let manga_id = parseInt(req.body.manga_id);
     if (req.body.new_manga) {
