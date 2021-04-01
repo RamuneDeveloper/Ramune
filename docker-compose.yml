@@ -1,0 +1,58 @@
+version: '2.3'
+services:
+  ramune-db:
+    image: healthcheck/postgres
+    container_name: ramune-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=nano
+      - POSTGRES_PASSWORD=shinonome
+      - POSTGRES_DB=ramunedb
+    volumes:
+      - db-data:/var/lib/postgresql/data/
+  ramune:
+    build: .
+    container_name: ramune
+    restart: unless-stopped
+    depends_on:
+      ramune-db:
+        condition: service_healthy
+    ports:
+      - 127.0.0.1:9000:9000
+    env_file:
+      - .env
+    environment:
+      - DB_USER=nano
+      - DB_PASSWORD=shinonome
+      - DB_DATABASE=ramunedb
+      - DB_HOST=ramune-db
+    volumes:
+      - data:/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000"]
+      interval: 1m
+      timeout: 2m
+      retries: 3
+      start_period: 30s
+  autoheal:
+    restart: always
+    container_name: ramune-autoheal
+    image: willfarrell/autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  # If you need to store your volumes manually, uncomment the "driver_opts" lines and specify your "device" location.
+  db-data:
+    driver: local
+    # driver_opts:
+    #   type: 'none'
+    #   o: 'bind'
+    #   device: "/mnt/hdd/ramune-db"
+  data:
+    driver: local
+    # driver_opts:
+    #   type: 'none'
+    #   o: 'bind'
+    #   device: "/mnt/hdd/ramune"
