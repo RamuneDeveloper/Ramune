@@ -16,7 +16,7 @@ yarn run dev
 ### To-do before public release
 This is MVP stuff; more features will be considered and implemented latter.
 
-- [ ] Uploading
+- [x] Uploading
 - [ ] Downloading
 - [ ] Manga search
 - [ ] Columns for volumes (instead of just chapters)
