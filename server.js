@@ -12,6 +12,7 @@ const hasha = require('hasha')
 const read_chunk = require('read-chunk');
 const img_size = require('image-size')
 const img_type = require('image-type')
+const yazl = require('yazl');
 const crypto = require('crypto');
 const Promise = require('bluebird');
 const fs = require('fs-extra')
@@ -94,6 +95,18 @@ express()
   })
   .get('/login', (req, res) => res.send(login({ req: req })))
   .get('/register', (req, res) => res.send(register({ req: req })))
+  .get('/download/:id', async (req, res) => {
+    const zip = new yazl.ZipFile();
+    const upload_rows = await db.query('SELECT * FROM uploads WHERE id = $1', [req.params.id]);
+    if (!upload_rows.rows.length) return res.sendStatus(404);
+    await Promise.mapSeries(upload_rows.rows[0].images, async (image, i) => {
+      const buffer = await read_chunk(path.join(process.env.FILES_ROOT, 'assets', image), 0, img_type.minimumBytes)
+      const _img_type = img_type(buffer);
+      zip.addFile(path.join(process.env.FILES_ROOT, 'assets', image), (i + 1) + '.' + _img_type.ext);
+    });
+    zip.end();
+    zip.outputStream.pipe(res);
+  })
   .post('/api/upload', file_upload.fields([
     { name: 'cover' },
     { name: 'upload_file' }
@@ -112,7 +125,7 @@ express()
       if (!/(gif|jpe?g|png|webp)/i.test(_img_type.ext)) return res.status(422).send('Encountered unsupported image.');
       const dimensions = await sizeOf(req.files.cover[0].path);
       if (dimensions.width > 10000 || dimensions.height > 10000) return res.status(422).send('Encountered extremely large image. Resolution limit is 10000x10000.');
-      const cover_hash = hasha.fromFile(req.files.cover[0].path, { algorithm: 'md5' });
+      const cover_hash = await hasha.fromFile(req.files.cover[0].path, { algorithm: 'md5' });
       await fs.move(req.files.cover[0].path, path.join(process.env.FILES_ROOT, 'assets', cover_hash + '.' + _img_type.ext))
         .catch(() => {})
 

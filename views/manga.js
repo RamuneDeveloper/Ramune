@@ -35,20 +35,9 @@ module.exports = (props) => shell(`
                           <a href="${'/release/' + upload.id}">
                             <button class="btn btn-primary">Read</button>
                           </a>
-                          <div class="btn-group">
+                          <a href="${'/download/' + upload.id}" download="${props.results[0].eng_title}_chapter${chapter_num}_${upload.id}.zip">
                             <button class="btn btn-success">Download</button>
-                            <button class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-                              <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu">
-                              <li>
-                                <a href="#">Resized</a>
-                              </li>
-                              <li>
-                                <a href="#">Original</a>
-                              </li>
-                            </ul>
-                          </div>
+                          </a>
                         </div>
                       </li>
                     `).join('')}

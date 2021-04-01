@@ -17,6 +17,6 @@ yarn run dev
 This is MVP stuff; more features will be considered and implemented latter.
 
 - [x] Uploading
-- [ ] Downloading
+- [x] Downloading
 - [ ] Manga search
 - [ ] Columns for volumes (instead of just chapters)
