@@ -25,8 +25,8 @@ module.exports = props => `
               <li><a href="/info">Info</a></li>
             */''}
           </ul>
-          <form class="navbar-search pull-right">
-            <input type="text" class="search-query" placeholder="Search">
+          <form class="navbar-search pull-right" method="GET" action="/">
+            <input type="text" name="q" class="search-query" placeholder="Search">
           </form>
         </div>
       </div>

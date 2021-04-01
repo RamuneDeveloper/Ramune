@@ -62,7 +62,15 @@ express()
   .use(express.static('public'))
   .use('/assets', express.static(path.join(process.env.FILES_ROOT, 'assets')))
   .get('/', async (req, res) => {
-    const results = await db.query('SELECT * FROM manga');
+    let query = 'SELECT * FROM manga ';
+    let params = [];
+    if (req.query.q) {
+      query += `WHERE to_tsvector('english', eng_title || ' ' || romaji_title || ' ' || author || ' ' || artist || ' ' || romaji_title) @@ websearch_to_tsquery($1) `;
+      params.push(req.query.q)
+    }
+    query += 'LIMIT 25';
+
+    const results = await db.query(query, params);
     res.send(home({
       req: req,
       results: results.rows

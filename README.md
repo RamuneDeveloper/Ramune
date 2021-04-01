@@ -18,5 +18,5 @@ This is MVP stuff; more features will be considered and implemented latter.
 
 - [x] Uploading
 - [x] Downloading
-- [ ] Manga search
+- [x] Manga search
 - [ ] Columns for volumes (instead of just chapters)
