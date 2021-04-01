@@ -25,7 +25,7 @@ module.exports = (props) => `
           <button class="titlebarButton" id="fitButton" title="Change fit">
             <i class="icon-resize-full icon-white"></i>
           </button>
-          <button class="titlebarButton" id="invertButton" title="Invert direction">
+          <button class="titlebarButton" id="invertButton" title="Invert reading direction">
             <i class="icon-random icon-white"></i>
           </button>
         </div>
