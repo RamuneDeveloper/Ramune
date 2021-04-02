@@ -100,7 +100,8 @@ express()
     res.send(manga({
       req: req,
       results: results.rows,
-      uploads: sortObject(uploads)
+      uploads: sortObject(uploads),
+      flash: res.locals.flash
     }))
   })
   .get('/release/:id', (req, res) => res.send(reader({ req: req })))
