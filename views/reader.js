@@ -14,6 +14,7 @@ module.exports = (props) => `
       <script src="https://stackpath.bootstrapcdn.com/bootstrap/2.3.2/js/bootstrap.min.js"></script>
     </head>
     <body>
+      <div id="preload" style="display:none;"></div> 
       <div id="titlebarContainer">
         <div id="titlebar">
           <button class="titlebarButton" id="backButton" onclick="history.back()">

@@ -92,6 +92,12 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
   images = release_data[0].images;
   total_pages = images.length
 
+  images.forEach(image => {
+    var img = document.createElement('img');
+    img.setAttribute('src', '/assets/' + image);
+    document.getElementById('preload').appendChild(img);
+  });
+
   var img = document.createElement('img');
   img.setAttribute('draggable', 'false');
   img.setAttribute('src', '/assets/' + images[0]);
