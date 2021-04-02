@@ -1,5 +1,10 @@
 const shell = require('./components/shell')
 module.exports = props => shell(`
+  ${props.flash.map(flash => `
+    <div class="flash-messages">
+      ${flash.message}
+    </div>
+  `).join('')}
   <div class="container">
     <div style="flex-direction: row" class="login-container">
       <h3>Register</h3>

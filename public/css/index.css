@@ -107,6 +107,14 @@ details > ul > li:hover {
   z-index: 97;
 }
 
+.flash-messages {
+  background-color: #3c3c3c;
+  border-radius: 4px;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+}
+
 #pageRight {
   position: fixed;
   height: 100%;

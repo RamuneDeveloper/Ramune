@@ -1,6 +1,10 @@
 const shell = require('./components/shell');
-// unfinished
 module.exports = (props) => shell(`
+  ${props.flash.map(flash => `
+    <div class="flash-messages">
+      ${flash.msg}
+    </div>
+  `).join('')}
   <div class="container">
     <h1>Upload</h1>
     <form

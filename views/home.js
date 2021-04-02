@@ -1,5 +1,10 @@
 const shell = require('./components/shell');
 module.exports = (props) => shell(`
+  ${props.flash.map(flash => `
+    <div class="flash-messages">
+      ${flash.message}
+    </div>
+  `).join('')}
   <div class="container text-center">
     ${props.results.length ? `
       <div class="row manga-container">
