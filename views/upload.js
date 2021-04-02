@@ -2,7 +2,7 @@ const shell = require('./components/shell');
 module.exports = (props) => shell(`
   ${props.flash.map(flash => `
     <div class="flash-messages">
-      ${flash.msg}
+      ${flash.message}
     </div>
   `).join('')}
   <div class="container">
