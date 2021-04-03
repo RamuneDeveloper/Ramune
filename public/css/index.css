@@ -22,6 +22,15 @@ h1, h2, h3, h4, h5, h6 {
   color: #737373;
 }
 
+.manga-title {
+  font-size: 32px;
+  color: white;
+}
+
+.sep {
+  height: 0.5em;
+}
+
 a:visited {
   text-decoration: none;
 }
@@ -208,4 +217,8 @@ details > ul > li:hover {
 .fas {
   font-family: 'FontAwesome';
   color: white;
+}
+
+.manga-cover {
+  max-height: 250px;
 }

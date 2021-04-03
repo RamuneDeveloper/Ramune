@@ -26,7 +26,7 @@ module.exports = props => `
             */''}
           </ul>
           <form class="navbar-search pull-right" method="GET" action="/">
-            <input type="text" name="q" class="search-query" placeholder="Search">
+            <input type="text" name="q" ${props.req.query.q ? `value="${props.req.query.q}"` : ''} class="search-query" placeholder="Search">
           </form>
         </div>
       </div>

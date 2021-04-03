@@ -4,11 +4,17 @@ module.exports = (props) => shell(`
     ${props.results.length ? `
       <div class="row">
         <div class="span2">
-          <img src="/assets/${props.results[0].cover}">
+          <img class="manga-cover" src="/assets/${props.results[0].cover}">
         </div>
         <div class="span10">
-          <h1>${props.results[0].eng_title}</h1>
-          <p>${props.results[0].description}</p>
+          <span class="manga-title">${props.results[0].eng_title}</span>
+          ${props.results[0].romaji_title ? `<span class="subtitle">(${props.results[0].romaji_title})</span>` : ''}
+          ${props.results[0].japanese_title ? `<span class="subtitle">(${props.results[0].japanese_title})</span>` : ''}
+          <p>
+            ${props.results[0].author ? `<b>Author:</b> <a href="/?q=${props.results[0].author}">${props.results[0].author}</a><br>` : ''}
+            ${props.results[0].artist ? `<b>Artist:</b> <a href="/?q=${props.results[0].artist}">${props.results[0].artist}</a><br>` : ''}
+            <b>Description:</b> ${props.results[0].description}
+          </p>
           ${Object.keys(props.uploads).length && props.uploads[Object.keys(props.uploads)[0]].length ? `
             <a href="${'/release/' + JSON.stringify(props.uploads[Object.keys(props.uploads)[0]][0].id)}">
               <button class="btn btn-primary">Start Reading</button>

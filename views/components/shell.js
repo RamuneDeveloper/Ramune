@@ -19,6 +19,7 @@ module.exports = (html, props = {}) => `
     </head>
     <body>
       ${header({ req: props.req })}
+      <div class="sep"></div>
       ${html}
     </body>
   </html>
