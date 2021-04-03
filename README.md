@@ -21,4 +21,4 @@ This is MVP stuff; more features will be considered and implemented latter.
 - [x] Manga search
 - [ ] Columns for volumes (instead of just chapters)
 - [ ] Groups
-- [ ] Switch to Font Awesome
+- [x] Switch to Font Awesome

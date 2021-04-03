@@ -204,3 +204,8 @@ details > ul > li:hover {
   pointer-events: none;
   background-color: #3c3c3c;
 }
+
+.fas {
+  font-family: 'FontAwesome';
+  color: white;
+}
