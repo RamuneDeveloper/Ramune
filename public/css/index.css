@@ -94,15 +94,26 @@ summary:hover {
   background-color: #3c3c3c;
 }
 
-details > ul > li {
-  margin-left: 5px;
-  list-style-type: none;
-  padding: 2px;
-  border-radius: 5px;
+ol {
+  margin: 0;
 }
 
-details > ul > li:hover {
-  background-color: #3c3c3c;
+.chapterlist {
+  color: #fff;
+}
+
+.chapterlist > thead > tr > th {
+  text-align: left;
+  padding-left: 8px;
+}
+
+.chapterlist > tbody > tr > .detail-column {
+  font-size: 18px;
+  padding-left: 8px;
+}
+
+.chapterlist > tbody > tr {
+  padding: 2px;
 }
 
 .imageView {

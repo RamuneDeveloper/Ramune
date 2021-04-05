@@ -1,0 +1,1 @@
+ALTER TABLE uploads ALTER COLUMN chapter_id SET DATA TYPE integer;

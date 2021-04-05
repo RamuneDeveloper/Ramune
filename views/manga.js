@@ -7,6 +7,7 @@ module.exports = (props) => shell(`
           <img class="manga-cover" src="/assets/${props.results[0].cover}">
         </div>
         <div class="span10">
+          <br>
           <span class="manga-title">${props.results[0].eng_title}</span>
           ${props.results[0].romaji_title ? `<span class="subtitle">(${props.results[0].romaji_title})</span>` : ''}
           ${props.results[0].japanese_title ? `<span class="subtitle">(${props.results[0].japanese_title})</span>` : ''}
@@ -15,8 +16,8 @@ module.exports = (props) => shell(`
             ${props.results[0].artist ? `<b>Artist:</b> <a href="/?q=${props.results[0].artist}">${props.results[0].artist}</a><br>` : ''}
             <b>Description:</b> ${props.results[0].description}
           </p>
-          ${Object.keys(props.uploads).length && props.uploads[Object.keys(props.uploads)[0]].length ? `
-            <a href="${'/release/' + JSON.stringify(props.uploads[Object.keys(props.uploads)[0]][0].id)}">
+          ${props.uploads.length ? `
+            <a href="${'/release/' + props.uploads[0].id}">
               <button class="btn btn-primary">Start Reading</button>
             </a>
           ` : ''}
@@ -24,35 +25,52 @@ module.exports = (props) => shell(`
       </div>
       <div class="row">
         <div class="span12">
-          ${Object.keys(props.uploads).length ? `
+          ${props.uploads.length ? `
             <h2>Chapters</h2>
-            <ol class="chapterlist">
-              ${Object.keys(props.uploads).map(chapter_num => `
-                <li>
-                  <details>
-                    <summary>Chapter ${chapter_num}</summary>
-                    ${props.uploads[chapter_num].length ? `
-                      <ul>
-                        ${props.uploads[chapter_num].map(upload => `
-                          <li>
-                            ${upload.group || `<span class="subtitle">No group</span>`}${upload.source ? ` - <i>${upload.source}</i>` : ''}<br>
-                            ${/* ${[1, 2, 3, 4, 5].map(i => i <= upload.rating ? '<i class="icon-star icon-white"></i>' : '<i class="icon-star-empty icon-white"></i>').join('')} (${upload.rating_count}) */''}
-                            <div class="upload-buttons">
-                              <a href="${'/release/' + upload.id}">
-                                <button class="btn btn-primary">Read</button>
-                              </a>
-                              <a href="${'/download/' + upload.id}" download="${props.results[0].eng_title}_chapter${chapter_num}_${upload.id}.zip">
-                                <button class="btn btn-success">Download</button>
-                              </a>
-                            </div>
-                          </li>
-                        `).join('')}
-                      </ul>
-                    ` : ''}
-                  </details>
-                </li>
-              `).join('')}
-            </ol>
+            <table width="100%" class="chapterlist">
+              <thead>
+                <tr>
+                  <th width="203px"></th>
+                  <th>Chapter</th>
+                  <th>Group</th>
+                  <th>Source</th>
+                  <th>Uploader</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${props.uploads.map((upload, i) => `
+                  <tr>
+                    <td class="upload-buttons">
+                      <a href="${'/release/' + upload.id}">
+                        <button class="btn btn-primary">Read</button>
+                      </a>
+                      <a href="${'/download/' + upload.id}" download="${upload.eng_title}_chapter${upload.chapter_id}_${upload.id}.zip">
+                        <button class="btn btn-success">Download</button>
+                      </a>
+                      ${props.password || props.req.session.account_id === upload.uploader ? `
+                        <a href="${'/edit/' + upload.id}">
+                          <button class="btn btn-warning">Edit</button>
+                        </a>
+                      ` : `
+                        <button class="btn btn-warning" disabled>Edit</button>
+                      `}
+                    </td>
+                    <td class="detail-column">
+                      <span>${upload.volume_id && upload.volume_id > 0 ? `Vol. ${upload.volume_id} ` : ''}Ch. ${upload.chapter_id}</span>
+                    </td>
+                    <td class="detail-column">
+                      ${upload.group ? `<span>${upload.group}</span>` : '<span class="subtitle">None</span>'}
+                    </td>
+                    <td class="detail-column">
+                      ${upload.source ? `<span>${upload.source}</span>` : '<span class="subtitle">None</span>'}
+                    </td>
+                    <td class="detail-column">
+                      <a href="/users/${upload.uploader}">${props.uploaders[i]}</a>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           `: '<h4 class="subtitle">No chapters.</h4>'}
         </div>
       </div>

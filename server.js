@@ -86,21 +86,17 @@ express()
   .get('/manga/:id', async (req, res) => {
     const results = await db.query('SELECT * FROM manga WHERE id = $1', [req.params.id]);
     const upload_results = await db.query('SELECT * FROM uploads WHERE manga_id = $1', [req.params.id]);
-    const uploads = {}
-    upload_results.rows.forEach(row => {
-      uploads[row.chapter_id] = uploads[row.chapter_id] ? [].concat(uploads[row.chapter_id], row) : [row]
-    });
 
-    // const chapter_results = await db.query('SELECT * FROM chapters WHERE manga_id = $1', [req.params.id]);
-    // const upload_results = await Promise.map(chapter_results.rows, async chapter => {
-    //   const upload_rows = await db.query('SELECT * FROM uploads WHERE chapter_id = $1', [chapter.id]);
-    //   return upload_rows.rows;
-    // })
+    const uploader_results = await Promise.map(upload_results.rows, async upload => {
+      const account = await db.query('SELECT * FROM accounts WHERE id = $1', [upload.uploader])
+      return account.rows[0].username
+    })
     
     res.send(manga({
       req: req,
       results: results.rows,
-      uploads: sortObject(uploads),
+      uploads: upload_results.rows.sort((a, b) => a['volume_id'] - b['volume_id'] || a['chapter_id'] - b['chapter_id']),
+      uploaders: uploader_results,
       flash: res.locals.flash
     }))
   })
@@ -197,7 +193,8 @@ express()
 
     const schema = {
       manga_id: manga_id,
-      chapter_id: parseInt(req.body.chapter),
+      volume_id: req.body.volume,
+      chapter_id: req.body.chapter,
       source: xss(req.body.source),
       uploader: req.session.account_id,
       images: hashed_entries

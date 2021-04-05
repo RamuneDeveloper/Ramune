@@ -1,0 +1,1 @@
+ALTER TABLE uploads DROP COLUMN volume_id;
