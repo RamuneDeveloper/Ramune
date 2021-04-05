@@ -124,6 +124,7 @@ ol {
   right: 0;
   top: 0;
   z-index: 95;
+  object-fit: contain;
 }
 
 #pageLeft {
