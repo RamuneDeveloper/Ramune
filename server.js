@@ -9,6 +9,7 @@ const home = require('./views/home');
 const upload = require('./views/upload');
 const manga = require('./views/manga');
 const reader = require('./views/reader');
+const user = require('./views/user');
 const hasha = require('hasha')
 const read_chunk = require('read-chunk');
 const img_size = require('image-size')
@@ -83,15 +84,38 @@ express()
       flash: res.locals.flash
     }))
   })
+  .get('/users/:id', async (req, res) => {
+    const account_results = await db.query('SELECT * FROM accounts WHERE id = $1', [req.params.id]);
+    if (!account_results.rows.length) return res.flash(`That user doesn't exist.`).redirect('back');
+
+    const upload_results = await db.query('SELECT * FROM uploads WHERE uploader = $1', [req.params.id]);
+
+    const manga_results = await Promise.map(upload_results.rows, async upload => {
+      const account = await db.query('SELECT * FROM manga WHERE id = $1', [upload.manga_id])
+      return account.rows[0]
+    })
+    
+    res.send(user({
+      req: req,
+      account: account_results.rows[0],
+      uploads: upload_results.rows,
+      manga: manga_results,
+      flash: res.locals.flash
+    }))
+  })
   .get('/manga/:id', async (req, res) => {
     const results = await db.query('SELECT * FROM manga WHERE id = $1', [req.params.id]);
     const upload_results = await db.query('SELECT * FROM uploads WHERE manga_id = $1', [req.params.id]);
 
     const uploader_results = await Promise.map(upload_results.rows, async upload => {
-      const account = await db.query('SELECT * FROM accounts WHERE id = $1', [upload.uploader])
-      return account.rows[0].username
+      if (upload.uploader > 0) {
+        const account = await db.query('SELECT * FROM accounts WHERE id = $1', [upload.uploader])
+        return account.rows[0].username
+      } else {
+        return null;
+      }
     })
-    
+
     res.send(manga({
       req: req,
       results: results.rows,

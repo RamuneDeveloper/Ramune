@@ -65,7 +65,7 @@ module.exports = (props) => shell(`
                       ${upload.source ? `<span>${upload.source}</span>` : '<span class="subtitle">None</span>'}
                     </td>
                     <td class="detail-column">
-                      <a href="/users/${upload.uploader}">${props.uploaders[i]}</a>
+                      ${props.uploaders[i] ? `<a href="/users/${upload.uploader}">${props.uploaders[i]}</a>` : '<span class="subtitle">System</span>'}
                     </td>
                   </tr>
                 `).join('')}
