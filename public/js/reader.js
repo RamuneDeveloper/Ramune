@@ -50,6 +50,7 @@ document.getElementById("fitButton").addEventListener("click", function (e) {
 document.addEventListener("keydown", function (e) {
   e = e || window.event;
   switch (e.keyCode) {
+      case 32:
       case 39:
       case 76:
         rightPage();
