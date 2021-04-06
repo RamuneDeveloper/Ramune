@@ -30,7 +30,7 @@ module.exports = (props) => shell(`
             <table width="100%" class="chapterlist">
               <thead>
                 <tr>
-                  <th width="203px"></th>
+                  <th width="185px"></th>
                   <th>Chapter</th>
                   <th>Group</th>
                   <th>Source</th>
