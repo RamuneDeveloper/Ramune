@@ -27,16 +27,14 @@ const invertPage = () => {
 
 const fitWidth = () => {
   fitCurrent = 'width';
-  document.getElementById('image').style.width = '100%';
+  document.getElementById('image').style.maxWidth = '100%';
   document.getElementById('image').style.height = 'auto';
-  document.getElementById('image').style.margin = '0';
 }
 
 const fitHeight = () => {
   fitCurrent = 'height';
-  document.getElementById('image').style.width = 'auto';
+  document.getElementById('image').style.maxWidth = null;
   document.getElementById('image').style.height = '100%';
-  document.getElementById('image').style.margin = 'auto';
 }
 
 document.getElementById("fitButton").addEventListener("click", function (e) {
@@ -104,7 +102,7 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
   img.setAttribute('src', '/assets/' + images[0]);
   img.className = "imageView";
   img.id = `image`;
-  img.style.width = 'auto';
+  img.style.maxWidth = null;
   img.style.height = '100%';
   document.getElementById('pageView').appendChild(img);
 

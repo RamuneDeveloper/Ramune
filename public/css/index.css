@@ -118,7 +118,7 @@ ol {
 
 .imageView {
   position: absolute;
-  margin: auto;
+  margin: 0 auto;
   bottom: 0;
   left: 0;
   right: 0;
