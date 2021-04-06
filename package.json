@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "supervisor -i node_modules -n error server.js",
-    "start": "node init.js && pm2-runtime start server.js -i max",
+    "start": "node init.js && pm2-runtime start server.js",
     "lint": "semistandard --fix --verbose | snazzy"
   },
   "dependencies": {
