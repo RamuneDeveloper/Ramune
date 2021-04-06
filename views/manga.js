@@ -45,14 +45,31 @@ module.exports = (props) => shell(`
                         <button class="btn btn-primary">Read</button>
                       </a>
                       <a href="${'/download/' + upload.id}" download="${upload.eng_title}_chapter${upload.chapter_id}_${upload.id}.zip">
-                        <button class="btn btn-success">Download</button>
+                        <button class="btn btn-success">
+                          <span class="fas fa-download"></span>
+                        </button>
                       </a>
                       ${props.password || props.req.session.account_id === upload.uploader ? `
                         <a href="${'/edit/' + upload.id}">
-                          <button class="btn btn-warning">Edit</button>
+                          <button class="btn btn-warning">
+                            <span class="fas fa-edit"></span>
+                          </button>
                         </a>
                       ` : `
-                        <button class="btn btn-warning" disabled>Edit</button>
+                        <button class="btn btn-warning" disabled>
+                          <span class="fas fa-edit"></span>
+                        </button>
+                      `}
+                      ${props.req.session.account_id === upload.uploader ? `
+                        <a href="${'/delete/' + upload.id}">
+                          <button class="btn btn-danger">
+                            <span class="fas fa-trash"></span>
+                          </button>
+                        </a>
+                      ` : `
+                        <button class="btn btn-danger" disabled>
+                          <span class="fas fa-trash"></span>
+                        </button>
                       `}
                     </td>
                     <td class="detail-column">
