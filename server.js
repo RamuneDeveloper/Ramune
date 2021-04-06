@@ -57,7 +57,7 @@ const file_upload = multer({
 express()
   .use(cookieSession({
     name: 'session',
-    secret: 'YvLRGScBvEywok6daMa87pQWjv5XvS'
+    secret: process.env.SECRET
   }))
   .use(flash())
   .use(bodyParser.urlencoded({ extended: false }))
