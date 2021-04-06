@@ -3,21 +3,26 @@ var total_pages;
 var images;
 var fitCurrent = 'height';
 
+const loadPage = () => {
+  for(let i = 1; i <= total_pages; i++){
+    document.getElementById(`image${i}`).style.visibility = "hidden";
+  }
+  document.getElementById(`image${current_page}`).style.visibility = 'visible';
+  document.getElementById('pageCounter').textContent = `${current_page}/${total_pages}`;
+}
 let leftPage = () => {
   if (current_page - 1 >= 1) {
     current_page -= 1;
-    document.getElementById('image').setAttribute('src', '/assets/' + images[current_page - 1]);
-    document.getElementById('pageCounter').textContent = `${current_page}/${total_pages}`;
     window.scrollTo(0,0);
+    loadPage();
   }
 }
 
 let rightPage = () => {
   if (current_page + 1 <= total_pages) {
     current_page += 1;
-    document.getElementById('image').setAttribute('src', '/assets/' + images[current_page - 1]);
-    document.getElementById('pageCounter').textContent = `${current_page}/${total_pages}`;
     window.scrollTo(0,0);
+    loadPage();
   }
 }
 
@@ -27,14 +32,18 @@ const invertPage = () => {
 
 const fitWidth = () => {
   fitCurrent = 'width';
-  document.getElementById('image').style.maxWidth = '100%';
-  document.getElementById('image').style.height = 'auto';
+  for(let i = 1; i <= total_pages; i++) {
+    document.getElementById(`image${i}`).style.maxWidth = '100%';
+    document.getElementById(`image${i}`).style.height = 'auto';
+  }
 }
 
 const fitHeight = () => {
   fitCurrent = 'height';
-  document.getElementById('image').style.maxWidth = null;
-  document.getElementById('image').style.height = '100%';
+  for(let i = 1; i <= total_pages; i++) {
+    document.getElementById(`image${i}`).style.maxWidth = null;
+    document.getElementById(`image${i}`).style.height = '100%';
+  }
 }
 
 document.getElementById("fitButton").addEventListener("click", function (e) {
@@ -91,23 +100,21 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
   images = release_data[0].images;
   total_pages = images.length
 
-  images.forEach(image => {
+  images.forEach((image, i) => {
     var img = document.createElement('img');
+    img.setAttribute('draggable', 'false');
     img.setAttribute('src', '/assets/' + image);
-    document.getElementById('preload').appendChild(img);
+    img.className = "imageView";
+    img.id = `image${i + 1}`;
+    img.style.visibility = 'hidden';
+    img.style.maxWidth = null;
+    img.style.height = '100%';
+    document.getElementById('pageView').appendChild(img);
   });
-
-  var img = document.createElement('img');
-  img.setAttribute('draggable', 'false');
-  img.setAttribute('src', '/assets/' + images[0]);
-  img.className = "imageView";
-  img.id = `image`;
-  img.style.maxWidth = null;
-  img.style.height = '100%';
-  document.getElementById('pageView').appendChild(img);
 
   document.getElementById('titlebarText').innerHTML = manga_data[0].eng_title;
   document.getElementById('pageCounter').textContent = `${current_page}/${total_pages}`;
+  document.getElementById(`image1`).style.visibility = "visible";
   // let images = release_data[0].images;
   // images.sort();
   // total_pages = images.length

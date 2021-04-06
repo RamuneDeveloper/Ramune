@@ -15,7 +15,6 @@ module.exports = (props) => `
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
     </head>
     <body>
-      <div id="preload" style="display:none;"></div> 
       <div id="titlebarContainer">
         <div id="titlebar">
           <button class="titlebarButton" id="backButton" onclick="history.back()">
