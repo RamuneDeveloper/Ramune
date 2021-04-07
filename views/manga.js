@@ -44,7 +44,7 @@ module.exports = (props) => shell(`
                       <a href="${'/release/' + upload.id}">
                         <button class="btn btn-primary">Read</button>
                       </a>
-                      <a href="${'/download/' + upload.id}" download="${upload.eng_title}_chapter${upload.chapter_id}_${upload.id}.zip">
+                      <a href="${'/download/' + upload.id}" download="${props.results[0].eng_title}_${upload.volume_id > 0 ? `volume${upload.volume_id}_` : ''}chapter${upload.chapter_id}_release${upload.id}.zip">
                         <button class="btn btn-success">
                           <span class="fas fa-download"></span>
                         </button>
