@@ -282,10 +282,6 @@ express()
     const upload_rows = await db.query('SELECT * FROM uploads WHERE id = $1', [req.params.id]);
     res.json(upload_rows.rows);
   })
-  .get('/api/chapters/:id', async (req, res) => {
-    const chapters_rows = await db.query('SELECT * FROM chapters WHERE id = $1', [req.params.id]);
-    res.json(chapters_rows.rows);
-  })
   .get('/api/manga/:id', async (req, res) => {
     const manga_rows = await db.query('SELECT * FROM manga WHERE id = $1', [req.params.id]);
     res.json(manga_rows.rows);
