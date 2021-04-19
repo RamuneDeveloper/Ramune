@@ -124,7 +124,9 @@ express()
       flash: res.locals.flash
     }))
   })
-  .get('/release/:id', (req, res) => res.send(reader({ req: req })))
+  .get('/release/:id', (req, res) => {
+    res.send(reader({ req: req }));
+  })
   .get('/upload', (req, res) => {
     if (!req.session || !req.session.account_id) return res.redirect('/login')
     return res.send(upload({
@@ -286,4 +288,8 @@ express()
     const manga_rows = await db.query('SELECT * FROM manga WHERE id = $1', [req.params.id]);
     res.json(manga_rows.rows);
   })
-  .listen(process.env.PORT || 9000)
+  .get('/api/manga/:id/releases', async (req, res) => {
+    const manga_rows = await db.query('SELECT * FROM uploads WHERE manga_id = $1', [req.params.id]);
+    res.json(manga_rows.rows);
+  })
+  .listen(process.env.PORT || 9001)

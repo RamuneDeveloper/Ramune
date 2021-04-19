@@ -37,6 +37,11 @@ module.exports = (props) => `
 
       <div id="pageView"></div>
 
+      <div id="endView">
+        <span class="manga-title">End of chapter</span><br>
+        <select id="endSelect"></select>
+      </div>
+
       <div id="pageFooter">
         <span id="pageCounter">0/?</span>
       </div>
