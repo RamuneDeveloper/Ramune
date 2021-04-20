@@ -4,6 +4,7 @@ module.exports = (props) => shell(`
     <div class="flash-messages">
       ${flash.message}
     </div>
+    <div class="sep"></div>
   `).join('')}
   <div class="container">
     <h1>Upload</h1>
