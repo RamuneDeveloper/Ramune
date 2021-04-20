@@ -138,13 +138,22 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
       </option>
     `
   })
-  // const results_above_current = all_release_data.filter(x => x.id > release_data[0].id);
-  // if (results_above_current.length) {
-  //   document.getElementById('endView').innerHTML += `
-  //     <br>
-  //     <a href="/release/${results_above_current[0].id}">Next chapter</a>
-  //   `
-  // }
+  
+  const results_above_current_chapter = all_release_data.filter(x => x.volume_id === release_data[0].volume_id && x.chapter_id > release_data[0].chapter_id);
+  if (results_above_current_chapter.length) {
+    document.getElementById('endView').innerHTML += `
+      <br>
+      <a href="/release/${results_above_current_chapter[0].id}">Next chapter</a>
+    `
+  } else {
+    const results_above_current_volume = all_release_data.filter(x => x.volume_id > release_data[0].volume_id);
+    if (results_above_current_volume.length) {
+      document.getElementById('endView').innerHTML += `
+        <br>
+        <a href="/release/${results_above_current_volume[0].id}">Next volume</a>
+      `
+    }
+  }
 
   document.getElementById("endSelect").addEventListener('change', function () {
     window.location = '/release/' + document.getElementById("endSelect").value;
