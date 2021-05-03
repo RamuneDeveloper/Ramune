@@ -6,16 +6,16 @@ var atEnd = false;
 
 const loadPage = () => {
   for(let i = 1; i <= total_pages; i++){
-    document.getElementById(`image${i}`).style.visibility = "hidden";
+    document.getElementById(`image${i}`).style.display = 'none';
   }
-  document.getElementById(`image${current_page}`).style.visibility = 'visible';
+  document.getElementById(`image${current_page}`).style.display = 'block';
   document.getElementById('pageCounter').textContent = `${current_page}/${total_pages}`;
 }
 let leftPage = () => {
   if (atEnd) {
     atEnd = false;
-    document.getElementById(`image${total_pages}`).style.visibility = 'visible';
-    document.getElementById(`endView`).style.visibility = 'hidden';
+    document.getElementById(`image${total_pages}`).style.display = 'block';
+    document.getElementById(`endView`).style.display = 'none';
   } else {
     if (current_page - 1 >= 1) {
       current_page -= 1;
@@ -33,8 +33,8 @@ let rightPage = () => {
   } else {
     if (!atEnd) {
       atEnd = true;
-      document.getElementById(`image${total_pages}`).style.visibility = 'hidden';
-      document.getElementById(`endView`).style.visibility = 'visible';
+      document.getElementById(`image${total_pages}`).style.display = 'none';
+      document.getElementById(`endView`).style.display = 'block';
     }
   }
 }
@@ -96,15 +96,15 @@ document.getElementById("pageRight").addEventListener("click", function (e) {
   rightPage()
 });
 
-document.getElementById("titlebar").style.visibility = "hidden";
-document.getElementById("endView").style.visibility = "hidden";
+document.getElementById("titlebar").style.display = 'none';
+document.getElementById("endView").style.display = 'none';
 
 document.getElementById("titlebarContainer").addEventListener("mouseenter", function () {
-  document.getElementById("titlebar").style.visibility = "visible";
+  document.getElementById("titlebar").style.display = 'block';
 });
 
 document.getElementById("titlebarContainer").addEventListener("mouseleave", function () {
-  document.getElementById("titlebar").style.visibility = "hidden";
+  document.getElementById("titlebar").style.display = 'none';
 });
 
 (async () => {
@@ -121,7 +121,7 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
     img.setAttribute('src', '/assets/' + image);
     img.className = "imageView";
     img.id = `image${i + 1}`;
-    img.style.visibility = 'hidden';
+    img.style.display = 'none';
     img.style.maxWidth = null;
     img.style.height = '100%';
     document.getElementById('pageView').appendChild(img);
@@ -129,7 +129,7 @@ document.getElementById("titlebarContainer").addEventListener("mouseleave", func
 
   document.getElementById('titlebarText').innerHTML = manga_data[0].eng_title;
   document.getElementById('pageCounter').textContent = `${current_page}/${total_pages}`;
-  document.getElementById(`image1`).style.visibility = "visible";
+  document.getElementById(`image1`).style.display = 'block';
 
   all_release_data.forEach(release => {
     document.getElementById('endSelect').innerHTML += `
