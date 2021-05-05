@@ -4,12 +4,15 @@ const flash = require('flash');
 const StreamZip = require('node-stream-zip');
 const express = require('express');
 const bodyParser = require('body-parser');
+const resumable = require('./resumable')('/tmp');
+const multipart = require('connect-multiparty');
 const xss = require('xss');
 const home = require('./views/home');
 const upload = require('./views/upload');
 const manga = require('./views/manga');
 const reader = require('./views/reader');
 const user = require('./views/user');
+const create = require('./views/create');
 const hasha = require('hasha')
 const read_chunk = require('read-chunk');
 const img_size = require('image-size')
@@ -27,13 +30,6 @@ const register = require('./views/register');
 
 const { promisify } = require('util')
 const sizeOf = promisify(img_size)
-
-function sortObject(obj) {
-  return Object.keys(obj).sort().reduce(function (result, key) {
-    result[key] = obj[key];
-    return result;
-  }, {});
-}
 
 const file_upload = multer({
   storage: multer.diskStorage({
@@ -134,6 +130,13 @@ express()
       flash: res.locals.flash
     }))
   })
+  .get('/create', (req, res) => {
+    if (!req.session || !req.session.account_id) return res.redirect('/login')
+    return res.send(create({
+      req: req,
+      flash: res.locals.flash
+    }))
+  })
   .get('/login', (req, res) => {
     res.send(login({
       req: req,
@@ -156,77 +159,87 @@ express()
     zip.end();
     zip.outputStream.pipe(res);
   })
-  .post('/api/upload', file_upload.fields([
-    { name: 'cover' },
-    { name: 'upload_file' }
-  ]), async (req, res) => {
-    if (!req.session.account_id) return res.sendStatus(401)
-    if (!req.body.new_manga && !req.body.manga_id) return res.flash('Manga ID is missing.').redirect('back');
-    if (req.body.new_manga && (!req.body.eng_title || !req.body.description)) return res.flash('Missing title/description on new manga.').redirect('back');
-    if (req.body.new_manga && !req.files.cover) return res.flash('Missing cover image on new manga.').redirect('back');
-    if (!req.files.upload_file) return res.flash('Missing cover image on new manga.').redirect('back');
+  .post('/api/upload', multipart(), async (req, res) => {
+    if (!req.session.account_id) return res.sendStatus(401);
+    if (!req.body.manga_id) return res.status(415).send('Missing manga ID.');
+    if (!req.body.chapter) return res.status(415).send('Missing chapter.');
+    if (!req.files.file) return res.status(415).send('Missing file.')
 
-    let manga_id = parseInt(req.body.manga_id);
-    if (req.body.new_manga) {
-      const buffer = await read_chunk(req.files.cover[0].path, 0, img_type.minimumBytes)
-      const _img_type = img_type(buffer);
-      if (!_img_type) return res.flash('That manga cover was not an image.').redirect('back');
-      if (!/(gif|jpe?g|png)/i.test(_img_type.ext)) return res.flash('That manga cover was not a supported image. JPG/GIF/PNG only.').redirect('back');
-      const dimensions = await sizeOf(req.files.cover[0].path);
-      if (dimensions.width > 10000 || dimensions.height > 10000) return res.flash('That manga cover was too large. Resolution limit is 10000x10000.').redirect('back');
-      const cover_hash = await hasha.fromFile(req.files.cover[0].path, { algorithm: 'md5' });
-      await fs.move(req.files.cover[0].path, path.join(process.env.FILES_ROOT, 'assets', cover_hash + '.' + _img_type.ext))
-        .catch(() => {})
+    resumable.post(req, (status, filename, original_filename, identifier) => {
+      if (status === 'done') {
+        const stream = fs.createWriteStream('/tmp/' + filename);
+        resumable.write(identifier, stream);
+        stream.once('finish', async () => {
+          const file_path = '/tmp/' + filename;
+          let manga_id = parseInt(req.body.manga_id);
+          const zip = new StreamZip.async({ file: file_path });
+          const entries = await zip.entries();
+          const sorted_entries = Object.values(entries)
+            .filter(entry => !entry.isDirectory)
+            .map(entry => entry.name)
+            .sort();
 
-      const schema = {
-        eng_title: xss(req.body.eng_title),
-        romaji_title: xss(req.body.romaji_title),
-        author: xss(req.body.author),
-        artist: xss(req.body.artist),
-        description: xss(req.body.description),
-        cover: cover_hash + '.' + _img_type.ext,
+          const hashed_entries = await Promise.mapSeries(sorted_entries, async entry => {
+            const temp_name = crypto.randomBytes(5).toString('hex');
+            await zip.extract(entry, path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name));
+            const buffer = await read_chunk(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), 0, img_type.minimumBytes)
+            const _img_type = img_type(buffer);
+            if (!_img_type) return;
+            if (!/(gif|jpe?g|png)/i.test(_img_type.ext)) return;
+            const dimensions = await sizeOf(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name));
+            if (dimensions.width > 10000 || dimensions.height > 10000) return res.status(415).send('There was an image in your ZIP that was too large. Resolution limit is 10000x10000.');
+            const hash = await hasha.fromFile(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), { algorithm: 'md5' });
+
+            await fs.move(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), path.join(process.env.FILES_ROOT, 'assets', hash + '.' + _img_type.ext))
+              .catch(() => {})
+            await fs.remove(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name))
+            return hash + '.' + _img_type.ext  
+          })
+        
+          await zip.close();
+          await fs.remove(file_path);
+        
+          const schema = {
+            manga_id: manga_id,
+            volume_id: req.body.volume || 0,
+            chapter_id: req.body.chapter,
+            source: xss(req.body.source),
+            uploader: req.session.account_id,
+            images: hashed_entries
+          }
+
+          await db.query(`INSERT INTO uploads (${Object.keys(schema).join(', ')}) VALUES (${Object.values(schema).map((_, i) => `$${i + 1}`).join(', ')})`, Object.values(schema))
+          res.send(status)
+        });
+      } else {
+        res.send(status)
       }
-
-      const manga_results = await db.query(`INSERT INTO manga (${Object.keys(schema).join(', ')}) VALUES (${Object.values(schema).map((_, i) => `$${i + 1}`).join(', ')}) returning id`, Object.values(schema))
-      manga_id = manga_results.rows[0].id;
-    }
-    const zip = new StreamZip.async({ file: req.files.upload_file[0].path });
-    const entries = await zip.entries();
-    const sorted_entries = Object.values(entries)
-      .filter(entry => !entry.isDirectory)
-      .map(entry => entry.name)
-      .sort();
-    
-    const hashed_entries = await Promise.mapSeries(sorted_entries, async entry => {
-      const temp_name = crypto.randomBytes(5).toString('hex');
-      await zip.extract(entry, path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name));
-      const buffer = await read_chunk(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), 0, img_type.minimumBytes)
-      const _img_type = img_type(buffer);
-      if (!_img_type) return;
-      if (!/(gif|jpe?g|png)/i.test(_img_type.ext)) return;
-      const dimensions = await sizeOf(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name));
-      if (dimensions.width > 10000 || dimensions.height > 10000) return  res.flash('There was an image in your ZIP that was too large. Resolution limit is 10000x10000.').redirect('back');
-      const hash = await hasha.fromFile(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), { algorithm: 'md5' });
-      
-      await fs.move(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name), path.join(process.env.FILES_ROOT, 'assets', hash + '.' + _img_type.ext))
-        .catch(() => {})
-      await fs.remove(path.join(process.env.FILES_ROOT, 'assets', 'temp', temp_name))
-      return hash + '.' + _img_type.ext  
     })
-
-    await zip.close();
-    await fs.remove(req.files.upload_file[0].path);
+  })
+  .post('/api/create', file_upload.single('cover'), async (req, res) => {
+    if (!req.file) return res.flash('Missing cover image.').redirect('back');
+    const buffer = await read_chunk(req.file.path, 0, img_type.minimumBytes)
+    const _img_type = img_type(buffer);
+    if (!_img_type) return res.flash('That manga cover was not an image.').redirect('back');
+    if (!/(gif|jpe?g|png)/i.test(_img_type.ext)) return res.flash('That manga cover was not a supported image. JPG/GIF/PNG only.').redirect('back');
+    const dimensions = await sizeOf(req.file.path);
+    if (dimensions.width > 10000 || dimensions.height > 10000) return res.flash('That manga cover was too large. Resolution limit is 10000x10000.').redirect('back');
+    const cover_hash = await hasha.fromFile(req.file.path, { algorithm: 'md5' });
+    await fs.move(req.file.path, path.join(process.env.FILES_ROOT, 'assets', cover_hash + '.' + _img_type.ext))
+      .catch(() => {})
 
     const schema = {
-      manga_id: manga_id,
-      volume_id: req.body.volume,
-      chapter_id: req.body.chapter,
-      source: xss(req.body.source),
-      uploader: req.session.account_id,
-      images: hashed_entries
+      eng_title: xss(req.body.eng_title),
+      romaji_title: xss(req.body.romaji_title),
+      author: xss(req.body.author),
+      artist: xss(req.body.artist),
+      description: xss(req.body.description),
+      cover: cover_hash + '.' + _img_type.ext,
     }
-    
-    await db.query(`INSERT INTO uploads (${Object.keys(schema).join(', ')}) VALUES (${Object.values(schema).map((_, i) => `$${i + 1}`).join(', ')})`, Object.values(schema))
+
+    const manga_results = await db.query(`INSERT INTO manga (${Object.keys(schema).join(', ')}) VALUES (${Object.values(schema).map((_, i) => `$${i + 1}`).join(', ')}) returning id`, Object.values(schema))
+    manga_id = manga_results.rows[0].id;
+
     res.flash('Success!').redirect('/manga/' + manga_id)
   })
   .get('/api/logout', (req, res) => {

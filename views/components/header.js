@@ -11,7 +11,7 @@ module.exports = props => `
         <div class="nav-collapse collapse">
           <ul class="nav">
             <li><a href="/">Manga</a></li>
-            <li><a href="/upload">Upload</a></li>
+            <li><a href="/create">Submit new manga</a></li>
             ${props.req.session && props.req.session.account_id ? `
               <li><a href="/api/logout">Logout</a></li>
             ` : `

@@ -1,5 +1,11 @@
 const shell = require('./components/shell');
 module.exports = (props) => shell(`
+  ${props.flash.map(flash => `
+    <div class="flash-messages">
+      ${flash.message}
+    </div>
+    <div class="sep"></div>
+  `).join('')}
   <div class="container">
     ${props.results.length ? `
       <div class="row">
@@ -20,7 +26,12 @@ module.exports = (props) => shell(`
             <a href="${'/release/' + props.uploads[0].id}">
               <button class="btn btn-primary">Start Reading</button>
             </a>
-          ` : ''}
+          ` : `
+            <button class="btn btn-primary" disabled>Start Reading</button>
+          `}
+          <a href="${'/upload?id=' + props.results[0].id}">
+            <button class="btn btn-warning">Upload</button>
+          </a>
         </div>
       </div>
       <div class="row">
